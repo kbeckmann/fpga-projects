@@ -10,7 +10,7 @@ class Blinky(Elaboratable):
         m = Module()
 
         platform.add_resources([
-            Resource("led_io", 0, Pins("18", invert=False),
+            Resource("led_io", 0, Pins("18", invert=True),
                      Attrs(IO_TYPE="LVCMOS33")),
         ])
 
