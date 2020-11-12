@@ -7,11 +7,6 @@ class Blinky(Elaboratable):
     def elaborate(self, platform):
         m = Module()
 
-        platform.add_resources([
-            Resource("led", 0, Pins("18", dir="o"),
-                     Attrs(IOSTANDARD="LVCMOS33")),
-        ])
-
         cd_name = "pll"
 
         lock_o = Signal()
