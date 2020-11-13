@@ -41,13 +41,72 @@ class BlinkyXDROut(Elaboratable):
         with m.Else():
             m.d.sync += led_counter.eq(led_counter - 1)
 
-        # m.submodules += Instance("DFFR",
-        #     i_D=Const(1),
-        #     o_Q=led.o,
-        #     i_CLK=Const(1),
-        #     i_RESET=Const(1),
-        #     p_INIT=1
-        # )
+
+        return m
+
+# Needs some manual hacks in the .vg file, but it works!
+class BlinkyXDR10Out(Elaboratable):
+    def elaborate(self, platform):
+        m = Module()
+
+        platform.add_resources([
+            Resource("led_p", 0, Pins("17", dir="o"),
+                        Attrs(IO_TYPE="LVDS25")),
+            Resource("led_n", 0, Pins("18", dir="o"),
+                        Attrs(IO_TYPE="LVDS25")),
+        ])
+        
+        led_p = platform.request("led_p")
+        led_n = platform.request("led_n")
+
+        clk_freq = platform.default_clk_frequency
+        led_counter = Signal(range(int(clk_freq//2)), reset=int(clk_freq//2) - 1)
+
+        fclk = Signal(1)
+        m.domains += ClockDomain("fclk")
+        m.d.comb += ClockSignal(domain="fclk").eq(fclk)
+
+        pclk = Signal(1)
+        pclk_cnt = Signal(3)
+        m.domains += ClockDomain("pclk")
+        m.d.comb += ClockSignal(domain="pclk").eq(pclk)
+
+        with m.If(led_counter == 0):
+            m.d.sync += led_counter.eq(led_counter.reset)
+            m.d.sync += fclk.eq(~fclk)
+        with m.Else():
+            m.d.sync += led_counter.eq(led_counter - 1)
+
+        with m.If(pclk_cnt == 0):
+            m.d.fclk += pclk.eq(~pclk)
+            m.d.fclk += pclk_cnt.eq(5)
+        with m.Else():
+            m.d.fclk += pclk_cnt.eq(pclk_cnt - 1)
+
+        serdes_data = Signal()
+
+        m.submodules.lvds = Instance("ELVDS_OBUF",
+            i_I=serdes_data,
+            o_O=led_p.o,
+            o_OB=led_n.o,
+        )
+
+        m.submodules.oser = Instance("OSER10",
+            i_D0=Const(1),
+            i_D1=Const(0),
+            i_D2=Const(0),
+            i_D3=Const(0),
+            i_D4=Const(0),
+            i_D5=Const(0),
+            i_D6=Const(0),
+            i_D7=Const(0),
+            i_D8=Const(0),
+            i_D9=Const(0),
+            o_Q=serdes_data,
+            i_PCLK=ClockSignal("pclk"),
+            i_FCLK=ClockSignal("fclk"),
+            i_RESET=Const(0),
+        )
 
         return m
 
@@ -92,6 +151,8 @@ if __name__ == "__main__":
     # p.build(BlinkyXDROut(xdr=0), do_program=True)
     p.build(BlinkyXDROut(xdr=1), do_program=True)
     # p.build(BlinkyXDROut(xdr=2), do_program=True)
+
+    # p.build(BlinkyXDR10Out(), do_program=True)
 
     # p.build(BlinkyXDRIn(xdr=0), do_program=True)
     # p.build(BlinkyXDRIn(xdr=1), do_program=True)
