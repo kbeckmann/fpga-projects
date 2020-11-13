@@ -10,9 +10,9 @@ class BlinkyXDROut(Elaboratable):
     def elaborate(self, platform):
         m = Module()
 
-        # io_dir = "oe"
+        io_dir = "oe"
         # io_dir = "io"
-        io_dir = "o"
+        # io_dir = "o"
 
         platform.add_resources([
             Resource("led", 0, Pins("17"),
@@ -89,14 +89,6 @@ class BlinkyXDR10Out(Elaboratable):
         with m.Else():
             m.d.fclk += pclk_cnt.eq(pclk_cnt - 1)
 
-        serdes_data = Signal()
-
-        m.submodules.lvds = Instance("ELVDS_OBUF",
-            i_I=serdes_data,
-            o_O=led_p.o,
-            o_OB=led_n.o,
-        )
-
         m.submodules.oser = Instance("OSER10",
             i_D0=Const(1),
             i_D1=Const(0),
@@ -108,7 +100,7 @@ class BlinkyXDR10Out(Elaboratable):
             i_D7=Const(0),
             i_D8=Const(0),
             i_D9=Const(0),
-            o_Q=serdes_data,
+            o_Q=led,
             i_PCLK=ClockSignal("pclk"),
             i_FCLK=ClockSignal("fclk"),
             i_RESET=Const(0),
