@@ -59,14 +59,11 @@ class BlinkyXDR10Out(Elaboratable):
         m = Module()
 
         platform.add_resources([
-            Resource("led_p", 0, Pins("17", dir="o"),
-                        Attrs(IO_TYPE="LVDS25")),
-            Resource("led_n", 0, Pins("18", dir="o"),
-                        Attrs(IO_TYPE="LVDS25")),
+            Resource("led", 0, Pins("17"),
+                        Attrs(IO_TYPE="LVCMOS33")),
         ])
         
-        led_p = platform.request("led_p")
-        led_n = platform.request("led_n")
+        led = platform.request("led", dir="o")
 
         clk_freq = platform.default_clk_frequency
         led_counter = Signal(range(int(clk_freq//2)), reset=int(clk_freq//2) - 1)
